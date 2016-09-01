@@ -16,4 +16,5 @@ func AppEngineCheck(w http.ResponseWriter, r *http.Request, next http.HandlerFun
 		errors.ReturnError(w, http.StatusInternalServerError, "Datastore offline", "Please try again later")
 		return
 	}
+	next(w, r)
 }

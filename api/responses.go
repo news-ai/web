@@ -9,11 +9,21 @@ import (
 	"github.com/news-ai/web/errors"
 )
 
+type BasePagingCursors struct {
+	Before string `json:"before"`
+	After  string `json:"after"`
+}
+
+type BasePagingResponse struct {
+	Cursors BasePagingCursors `json:"cursors"`
+	Next    string            `json:"next"`
+}
+
 type BaseResponse struct {
-	Count    int         `json:"count"`
-	Next     string      `json:"next"`
-	Data     interface{} `json:"data"`
-	Included interface{} `json:"included"`
+	Count    int                `json:"count"`
+	Data     interface{}        `json:"data"`
+	Included interface{}        `json:"included"`
+	Paging   BasePagingResponse `json:"paging"`
 }
 
 type BaseSingleResponse struct {

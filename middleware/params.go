@@ -49,7 +49,7 @@ func ConstructNext(r *http.Request, limit int, offset int, query string, order s
 	q.Set("offset", strconv.Itoa(offset+limit))
 
 	if query != "" {
-		q.Set("query", query)
+		q.Set("q", query)
 	}
 
 	if order != "" {
@@ -64,7 +64,7 @@ func AttachParameters(w http.ResponseWriter, r *http.Request, next http.HandlerF
 	limit, offset := GetPagination(r)
 	url, query, order := GetParams(r)
 	nextUrl := ConstructNext(r, limit, offset, query, order)
-	gcontext.Set(r, "query", query)
+	gcontext.Set(r, "q", query)
 	gcontext.Set(r, "url", url)
 	gcontext.Set(r, "order", order)
 	gcontext.Set(r, "limit", limit)

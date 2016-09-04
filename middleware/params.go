@@ -9,12 +9,13 @@ import (
 	"github.com/news-ai/web/utilities"
 )
 
-func GetPagination(r *http.Request) (int, int) {
+func GetPagination(r *http.Request) (int, int, string) {
 	limit := 20
 	offset := 0
 
 	queryLimit := r.URL.Query().Get("limit")
 	queryOffset := r.URL.Query().Get("offset")
+	queryAfter := r.URL.Query().Get("after")
 
 	// check if query exists
 	if len(queryLimit) != 0 {
@@ -32,7 +33,7 @@ func GetPagination(r *http.Request) (int, int) {
 		limit = max_limit
 	}
 
-	return limit, offset
+	return limit, offset, queryAfter
 }
 
 func GetParams(r *http.Request) (string, string, string) {
@@ -61,7 +62,7 @@ func ConstructNext(r *http.Request, limit int, offset int, query string, order s
 }
 
 func AttachParameters(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	limit, offset := GetPagination(r)
+	limit, offset, after := GetPagination(r)
 	url, query, order := GetParams(r)
 	nextUrl := ConstructNext(r, limit, offset, query, order)
 	gcontext.Set(r, "q", query)
@@ -69,6 +70,7 @@ func AttachParameters(w http.ResponseWriter, r *http.Request, next http.HandlerF
 	gcontext.Set(r, "order", order)
 	gcontext.Set(r, "limit", limit)
 	gcontext.Set(r, "offset", offset)
+	gcontext.Set(r, "after", after)
 	gcontext.Set(r, "next", nextUrl)
 	next(w, r)
 }

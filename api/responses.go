@@ -45,7 +45,7 @@ func BaseResponseHandler(val interface{}, included interface{}, count int, err e
 	basePagingResponse.Next = gcontext.Get(r, "next").(string)
 	basePagingResponse.Cursors = basePagingCursors
 
-	response.Next = basePagingResponse
+	response.Paging = basePagingResponse
 	return response, err
 }
 

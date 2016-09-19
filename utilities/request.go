@@ -3,6 +3,7 @@ package utilities
 import (
 	"errors"
 	"io"
+	"time"
 
 	"golang.org/x/net/context"
 	"golang.org/x/net/html"
@@ -40,6 +41,7 @@ func getHtmlTitle(r io.Reader) (string, bool, error) {
 
 func GetTitleFromHTTPRequest(c context.Context, url string) (string, error) {
 	client := urlfetch.Client(c)
+	client.Timeout = time.Duration(5 * time.Second)
 	resp, err := client.Get(url)
 	if err != nil {
 		return "", err

@@ -7,6 +7,17 @@ import (
 	"strings"
 )
 
+func NormalizeUrlToUsername(twitter string, url string) string {
+	twitter = strings.Replace(twitter, "http:", "", -1)
+	twitter = strings.Replace(twitter, "https:", "", -1)
+	twitter = strings.Replace(twitter, "www.", "", -1)
+	twitter = strings.Replace(twitter, "/", "", -1)
+	twitter = strings.Replace(twitter, url, "", -1)
+	twitter = strings.Replace(twitter, "@", "", -1)
+	twitter = strings.Replace(twitter, ".", "", -1)
+	return twitter
+}
+
 func NormalizeUrl(initialUrl string) (string, error) {
 	u, err := url.Parse(initialUrl)
 	if err != nil {

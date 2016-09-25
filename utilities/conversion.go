@@ -31,6 +31,10 @@ func UpdateIfNotBlank(initial *string, replace string) {
 	if replace != "" {
 		*initial = replace
 	}
+
+	if replace == "" && *initial != "" {
+		*initial = replace
+	}
 }
 
 func StringIdToInt(id string) (int64, error) {

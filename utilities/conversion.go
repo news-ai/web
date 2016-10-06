@@ -27,6 +27,18 @@ func NormalizeUrl(initialUrl string) (string, error) {
 	return u.Scheme + "://" + urlHost, nil
 }
 
+func GetDomainName(initialUrl string) (string, error) {
+	u, err := url.Parse(initialUrl)
+	if err != nil {
+		return "", err
+	}
+	urlHost := strings.Split(u.Host, ".")
+	if len(urlHost) == 0 {
+		return u.Host, nil
+	}
+	return urlHost[0], nil
+}
+
 func UpdateIfNotBlank(initial *string, replace string) {
 	if replace != "" {
 		*initial = replace

@@ -15,6 +15,11 @@ import (
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
+type EmailSubstitute struct {
+	Name string
+	Code string
+}
+
 // Send an email confirmation to a new user
 func SendEmail(r *http.Request, email models.Email, user models.User) (bool, string, error) {
 	c := appengine.NewContext(r)
@@ -49,7 +54,7 @@ func SendEmail(r *http.Request, email models.Email, user models.User) (bool, str
 
 // Send an email confirmation to a new user
 // Someday convert this to a batch so we can send multiple confirmation emails at once
-func SendInternalEmail(r *http.Request, email models.Email, templateId string, subject string, substitution string, confirmationCode string) (bool, string, error) {
+func SendInternalEmail(r *http.Request, email models.Email, templateId string, subject string, emailSubstitutes []EmailSubstitute) (bool, string, error) {
 	c := appengine.NewContext(r)
 	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)
 
@@ -73,7 +78,10 @@ func SendInternalEmail(r *http.Request, email models.Email, templateId string, s
 		mail.NewEmail(emailFullName, email.To),
 	}
 	p.AddTos(tos...)
-	p.SetSubstitution(substitution, confirmationCode)
+
+	for i := 0; i < len(emailSubstitutes); i++ {
+		p.SetSubstitution(emailSubstitutes[i].Name, emailSubstitutes[i].Code)
+	}
 
 	// Add personalization
 	m.AddPersonalizations(p)

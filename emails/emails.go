@@ -65,7 +65,10 @@ func SendInternalEmail(r *http.Request, email models.Email, templateId string, s
 	p.Subject = subject
 
 	// Adding who we are sending the email to
-	emailFullName := strings.Join([]string{email.FirstName, email.LastName}, " ")
+	emailFullName := ""
+	if email.FirstName != "" && email.LastName != "" {
+		emailFullName = strings.Join([]string{email.FirstName, email.LastName}, " ")
+	}
 	tos := []*mail.Email{
 		mail.NewEmail(emailFullName, email.To),
 	}

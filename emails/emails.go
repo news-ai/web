@@ -54,7 +54,7 @@ func SendEmail(r *http.Request, email models.Email, user models.User) (bool, str
 
 // Send an email confirmation to a new user
 // Someday convert this to a batch so we can send multiple confirmation emails at once
-func SendInternalEmail(r *http.Request, email models.Email, templateId string, subject string, emailSubstitutes []EmailSubstitute) (bool, string, error) {
+func SendInternalEmail(r *http.Request, email models.Email, templateId string, subject string, emailSubstitutes []EmailSubstitute, sendAt int) (bool, string, error) {
 	c := appengine.NewContext(r)
 	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)
 
@@ -81,6 +81,10 @@ func SendInternalEmail(r *http.Request, email models.Email, templateId string, s
 
 	for i := 0; i < len(emailSubstitutes); i++ {
 		p.SetSubstitution(emailSubstitutes[i].Name, emailSubstitutes[i].Code)
+	}
+
+	if sendAt != 0 {
+		p.SetSendAt(sendAt)
 	}
 
 	// Add personalization

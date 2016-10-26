@@ -91,3 +91,14 @@ func StripQueryString(inputUrl string) string {
 	u.RawQuery = ""
 	return u.String()
 }
+
+func StripQueryStringForWebsite(inputUrl string) string {
+	u, err := url.Parse(inputUrl)
+	if err != nil {
+		return inputUrl
+	}
+	if u.Host != "" {
+		u.Host = strings.ToLower(u.Host)
+	}
+	return u.String()
+}

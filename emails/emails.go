@@ -83,9 +83,9 @@ func SendInternalEmail(r *http.Request, email models.Email, templateId string, s
 		p.SetSubstitution(emailSubstitutes[i].Name, emailSubstitutes[i].Code)
 	}
 
-	if sendAt != 0 {
-		p.SetSendAt(sendAt)
-	}
+	// if !email.SendAt.IsZero() {
+	// 	p.SetSendAt(email.SendAt.Unix())
+	// }
 
 	// Add personalization
 	m.AddPersonalizations(p)

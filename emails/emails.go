@@ -1,6 +1,7 @@
 package emails
 
 import (
+	"encoding/base64"
 	"net/http"
 	"os"
 	"strings"
@@ -66,13 +67,20 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 	// Add attachments
 	if len(email.Attachments) > 0 {
 		bytesArray, attachmentType, fileNames, err := attach.GetAttachmentsForEmail(r, email, files)
+		log.Infof(c, "%v", bytesArray)
 		if err == nil {
 			for i := 0; i < len(bytesArray); i++ {
 				a := mail.NewAttachment()
-				a.SetContent(bytesArray[i])
+
+				str := base64.StdEncoding.EncodeToString(bytesArray[i])
+
+				a.SetContent(str)
 				a.SetType(attachmentType[i])
 				a.SetFilename(fileNames[i])
 				a.SetDisposition("attachment")
+
+				log.Infof(c, "%v", a)
+
 				m.AddAttachment(a)
 			}
 		}

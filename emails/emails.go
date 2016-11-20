@@ -2,8 +2,10 @@ package emails
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/news-ai/tabulae/attach"
@@ -22,6 +24,40 @@ type EmailSubstitute struct {
 	Code string
 }
 
+type EmailCancel struct {
+	BatchId string `json:"batch_id"`
+	Status  string `json:"status"`
+}
+
+func CancelEmail(r *http.Request, email models.Email) error {
+	c := appengine.NewContext(r)
+
+	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)
+
+	cancelEmail := EmailCancel{}
+	cancelEmail.BatchId = strconv.FormatInt(email.Id, 10)
+	cancelEmail.Status = "pause"
+
+	b, err := json.Marshal(cancelEmail)
+	if err != nil {
+		log.Errorf(c, "%v", err)
+		return err
+	}
+
+	request := sendgrid.GetRequest(os.Getenv("SENDGRID_API_KEY"), "/v3/user/scheduled_sends", "https://api.sendgrid.com")
+	request.Method = "POST"
+	request.Body = b
+
+	// Send the actual mail here
+	_, err = sendgrid.API(request)
+	if err != nil {
+		log.Errorf(c, "error: %v", err)
+		return err
+	}
+
+	return nil
+}
+
 // Send an email confirmation to a new user
 func SendEmail(r *http.Request, email models.Email, user models.User, files []models.File) (bool, string, error) {
 	c := appengine.NewContext(r)
@@ -36,6 +72,7 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 	content := mail.NewContent("text/html", email.Body)
 
 	m := mail.NewV3Mail()
+	m.SetBatchID(strconv.FormatInt(email.Id, 10))
 
 	// Set from
 	m.SetFrom(from)

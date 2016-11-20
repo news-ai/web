@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/news-ai/tabulae/attach"
@@ -29,13 +28,39 @@ type EmailCancel struct {
 	Status  string `json:"status"`
 }
 
+type EmailBatchResponse struct {
+	BatchId string `json:"batch_id"`
+}
+
+func getBatchId(r *http.Request) string {
+	c := appengine.NewContext(r)
+	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)
+
+	request := sendgrid.GetRequest(os.Getenv("SENDGRID_API_KEY"), "/v3/mail/batch", "https://api.sendgrid.com")
+	request.Method = "POST"
+
+	response, err := sendgrid.API(request)
+	if err != nil {
+		log.Errorf(c, "error: %v", err)
+		return ""
+	}
+
+	var batch EmailBatchResponse
+
+	if err := json.Unmarshal([]byte(response.Body), &batch); err != nil {
+		log.Errorf(c, "%v", err)
+		return ""
+	}
+
+	return batch.BatchId
+}
+
 func CancelEmail(r *http.Request, email models.Email) error {
 	c := appengine.NewContext(r)
-
 	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)
 
 	cancelEmail := EmailCancel{}
-	cancelEmail.BatchId = strconv.FormatInt(email.Id, 10)
+	cancelEmail.BatchId = email.BatchId
 	cancelEmail.Status = "pause"
 
 	b, err := json.Marshal(cancelEmail)
@@ -59,7 +84,7 @@ func CancelEmail(r *http.Request, email models.Email) error {
 }
 
 // Send an email confirmation to a new user
-func SendEmail(r *http.Request, email models.Email, user models.User, files []models.File) (bool, string, error) {
+func SendEmail(r *http.Request, email models.Email, user models.User, files []models.File) (bool, string, string, error) {
 	c := appengine.NewContext(r)
 
 	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)
@@ -72,7 +97,6 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 	content := mail.NewContent("text/html", email.Body)
 
 	m := mail.NewV3Mail()
-	m.SetBatchID(strconv.FormatInt(email.Id, 10))
 
 	// Set from
 	m.SetFrom(from)
@@ -90,12 +114,20 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 	}
 	p.AddTos(tos...)
 
+	batchId := ""
+
 	if !email.SendAt.IsZero() {
 		var timeInt int
 		var unixTime int64
 		unixTime = email.SendAt.Unix()
 		timeInt = int(unixTime)
 		p.SetSendAt(timeInt)
+
+		batchId = getBatchId(r)
+		// if batchId != "" {
+		// 	m.SetBatchID(batchId)
+		// }
+		log.Infof(c, "%v", batchId)
 	}
 
 	// Add personalization
@@ -131,14 +163,14 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 	response, err := sendgrid.API(request)
 	if err != nil {
 		log.Errorf(c, "error: %v", err)
-		return false, "", err
+		return false, "", "", err
 	}
 
 	emailId := ""
 	if len(response.Headers["X-Message-Id"]) > 0 {
 		emailId = response.Headers["X-Message-Id"][0]
 	}
-	return true, emailId, nil
+	return true, emailId, batchId, nil
 }
 
 // Send an email confirmation to a new user

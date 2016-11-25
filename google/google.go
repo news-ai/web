@@ -1,11 +1,11 @@
 package google
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -43,6 +43,7 @@ type RefreshTokenResponse struct {
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int    `json:"expires_in"`
 	TokenType   string `json:"token_type"`
+	IdToken     string `json:"id_token"`
 }
 
 // Check if access token is valid
@@ -84,22 +85,17 @@ func RefreshAccessToken(r *http.Request, user models.User) error {
 		return errors.New("User does not have a refresh token")
 	}
 
-	refreshtokenRequest := RefreshTokenRequest{}
-	refreshtokenRequest.ClientID = os.Getenv("GOOGLEAUTHKEY")
-	refreshtokenRequest.ClientSecret = os.Getenv("GOOGLEAUTHSECRET")
-	refreshtokenRequest.RefreshToken = user.RefreshToken
-	refreshtokenRequest.GrantType = "refresh_token"
-
-	messageJson, err := json.Marshal(refreshtokenRequest)
-	if err != nil {
-		log.Errorf(c, "%v", err)
-		return err
-	}
-
-	messageQuery := bytes.NewReader(messageJson)
-
 	URL := BASEURL + "oauth2/v4/token"
-	req, _ := http.NewRequest("POST", URL, messageQuery)
+	req, _ := http.NewRequest("POST", URL, nil)
+
+	form := url.Values{}
+	form.Add("client_id", os.Getenv("GOOGLEAUTHKEY"))
+	form.Add("client_secret", os.Getenv("GOOGLEAUTHSECRET"))
+	form.Add("refresh_token", user.RefreshToken)
+	form.Add("grant_type", "refresh_token")
+
+	req.PostForm = form
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	response, err := client.Do(req)
 	if err != nil {
@@ -127,10 +123,13 @@ func RefreshAccessToken(r *http.Request, user models.User) error {
 
 	timeToAdd := time.Duration(time.Duration(toReturn.ExpiresIn) * time.Second)
 
-	user.AccessToken = toReturn.AccessToken
-	user.GoogleExpiresIn = time.Now().Add(timeToAdd)
-	user.TokenType = toReturn.TokenType
-	user.Save(c)
+	if toReturn.AccessToken != "" {
+		user.AccessToken = toReturn.AccessToken
+		user.GoogleExpiresIn = time.Now().Add(timeToAdd)
+		user.TokenType = toReturn.TokenType
+		user.Save(c)
+		return nil
+	}
 
-	return nil
+	return errors.New("Access token not present")
 }

@@ -125,5 +125,12 @@ func RefreshAccessToken(r *http.Request, user models.User) error {
 	log.Infof(c, "%v", response.Body)
 	log.Infof(c, "%v", contents)
 
+	timeToAdd := time.Duration(time.Duration(toReturn.ExpiresIn) * time.Second)
+
+	user.AccessToken = toReturn.AccessToken
+	user.GoogleExpiresIn = time.Now().Add(timeToAdd)
+	user.TokenType = toReturn.TokenType
+	user.Save(c)
+
 	return nil
 }

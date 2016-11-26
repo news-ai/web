@@ -22,5 +22,6 @@ func SendGmailEmail(r *http.Request, user models.User, email models.Email) (stri
 
 	gmail := Gmail.Gmail{}
 	gmail.AccessToken = user.AccessToken
+
 	return gmail.SendEmail(c, from, to, email.Subject, email.Body)
 }

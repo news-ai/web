@@ -3,6 +3,7 @@ package emails
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"strings"
@@ -61,7 +62,7 @@ func CancelEmail(r *http.Request, email models.Email) error {
 
 	cancelEmail := EmailCancel{}
 	cancelEmail.BatchId = email.BatchId
-	cancelEmail.Status = "pause"
+	cancelEmail.Status = "cancel"
 
 	b, err := json.Marshal(cancelEmail)
 	if err != nil {
@@ -69,18 +70,22 @@ func CancelEmail(r *http.Request, email models.Email) error {
 		return err
 	}
 
-	request := sendgrid.GetRequest(os.Getenv("SENDGRID_API_KEY"), "/v3/user/scheduled_sends", "https://api.sendgrid.com")
+	request := sendgrid.GetRequest(os.Getenv("SENDGRID_SCH_API_KEY"), "/v3/user/scheduled_sends", "https://api.sendgrid.com")
 	request.Method = "POST"
 	request.Body = b
 
 	// Send the actual mail here
-	_, err = sendgrid.API(request)
+	response, err := sendgrid.API(request)
 	if err != nil {
 		log.Errorf(c, "error: %v", err)
 		return err
 	}
 
-	return nil
+	if response.StatusCode == 201 || response.StatusCode == 200 {
+		return nil
+	}
+
+	return errors.New("Invalid response from Sendgrid")
 }
 
 // Send an email confirmation to a new user
@@ -124,9 +129,9 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 		p.SetSendAt(timeInt)
 
 		batchId = getBatchId(r)
-		// if batchId != "" {
-		// 	m.SetBatchID(batchId)
-		// }
+		if batchId != "" {
+			m.SetBatchID(batchId)
+		}
 		log.Infof(c, "%v", batchId)
 	}
 

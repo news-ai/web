@@ -36,7 +36,7 @@ func getBatchId(r *http.Request) string {
 	c := appengine.NewContext(r)
 	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)
 
-	request := sendgrid.GetRequest(os.Getenv("SENDGRID_API_KEY"), "/v3/mail/batch", "https://api.sendgrid.com")
+	request := sendgrid.GetRequest(os.Getenv("SENDGRID_BATCH_API_KEY"), "/v3/mail/batch", "https://api.sendgrid.com")
 	request.Method = "POST"
 
 	response, err := sendgrid.API(request)

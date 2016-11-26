@@ -11,7 +11,7 @@ import (
 	Gmail "github.com/news-ai/go-gmail"
 )
 
-func SendGmailEmail(r *http.Request, user models.User, email models.Email) error {
+func SendGmailEmail(r *http.Request, user models.User, email models.Email) (string, string, error) {
 	c := appengine.NewContext(r)
 
 	userFullName := strings.Join([]string{user.FirstName, user.LastName}, " ")
@@ -22,7 +22,5 @@ func SendGmailEmail(r *http.Request, user models.User, email models.Email) error
 
 	gmail := Gmail.Gmail{}
 	gmail.AccessToken = user.AccessToken
-	err := gmail.SendEmail(c, from, to, email.Subject, email.Body)
-
-	return err
+	return gmail.SendEmail(c, from, to, email.Subject, email.Body)
 }

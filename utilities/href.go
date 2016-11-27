@@ -1,51 +1,28 @@
 package utilities
 
 import (
-	"bytes"
+	"regexp"
+	"strings"
 
 	"golang.org/x/net/context"
-
-	"golang.org/x/net/html"
-
-	"google.golang.org/appengine/log"
 )
 
 func AppendHrefWithLink(c context.Context, body string, emailId string, hrefAppend string) string {
-	r := bytes.NewReader([]byte(body))
-	z := html.NewTokenizer(r)
+	re := regexp.MustCompile(`href=\"(.+?)\"`)
+	reLinks := regexp.MustCompile(`\"(.+?)\"`)
 
-	for {
-		tt := z.Next()
+	htmlALinks := re.FindAllString(body, -1)
 
-		switch {
-		case tt == html.ErrorToken:
-			buf := new(bytes.Buffer)
-			buf.ReadFrom(r)
-			log.Infof(c, "%v", buf.String())
-			return buf.String()
-		case tt == html.StartTagToken:
-			t := z.Token()
+	for i := 0; i < len(htmlALinks); i++ {
+		original := htmlALinks[i]
 
-			// Check if the token is an <a> tag
-			isAnchor := t.Data == "a"
-			if !isAnchor {
-				continue
-			}
+		htmlALink := reLinks.FindString(htmlALinks[i])
+		htmlALink = strings.Replace(htmlALink, "\"", "", -1)
+		newLink := hrefAppend + "?id=" + emailId + "&url=" + htmlALink
+		htmlALinks[i] = strings.Replace(htmlALinks[i], htmlALink, newLink, 1)
 
-			for i, a := range t.Attr {
-				if a.Key == "href" {
-					log.Infof(c, "%v", t.Attr[i])
-					t.Attr[i].Val = hrefAppend + "/?id=" + emailId + "&url=" + a.Val
-					log.Infof(c, "%v", t.Attr[i])
-				}
-			}
-
-		}
-
+		body = strings.Replace(body, original, htmlALinks[i], 1)
 	}
 
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(r)
-	log.Infof(c, "%v", buf.String())
-	return buf.String()
+	return body
 }

@@ -3,10 +3,14 @@ package utilities
 import (
 	"bytes"
 
+	"golang.org/x/net/context"
+
 	"golang.org/x/net/html"
+
+	"google.golang.org/appengine/log"
 )
 
-func AppendHrefWithLink(body string, emailId string, hrefAppend string) string {
+func AppendHrefWithLink(c context.Context, body string, emailId string, hrefAppend string) string {
 	r := bytes.NewReader([]byte(body))
 	z := html.NewTokenizer(r)
 
@@ -15,8 +19,10 @@ func AppendHrefWithLink(body string, emailId string, hrefAppend string) string {
 
 		switch {
 		case tt == html.ErrorToken:
-			// End of the document, we're done
-			return string(z.Raw())
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(r)
+			log.Infof(c, "%v", buf.String())
+			return buf.String()
 		case tt == html.StartTagToken:
 			t := z.Token()
 
@@ -26,9 +32,11 @@ func AppendHrefWithLink(body string, emailId string, hrefAppend string) string {
 				continue
 			}
 
-			for _, a := range t.Attr {
+			for i, a := range t.Attr {
 				if a.Key == "href" {
-					a.Val = hrefAppend + "/?id=" + emailId + "&url=" + a.Val
+					log.Infof(c, "%v", t.Attr[i])
+					t.Attr[i].Val = hrefAppend + "/?id=" + emailId + "&url=" + a.Val
+					log.Infof(c, "%v", t.Attr[i])
 				}
 			}
 
@@ -36,5 +44,8 @@ func AppendHrefWithLink(body string, emailId string, hrefAppend string) string {
 
 	}
 
-	return string(z.Raw())
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r)
+	log.Infof(c, "%v", buf.String())
+	return buf.String()
 }

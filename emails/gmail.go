@@ -11,7 +11,7 @@ import (
 	Gmail "github.com/news-ai/go-gmail"
 )
 
-func SendGmailEmail(r *http.Request, user models.User, email models.Email) (string, string, error) {
+func SendGmailEmail(r *http.Request, user models.User, email models.Email, files []models.File) (string, string, error) {
 	c := appengine.NewContext(r)
 
 	userFullName := strings.Join([]string{user.FirstName, user.LastName}, " ")
@@ -22,6 +22,10 @@ func SendGmailEmail(r *http.Request, user models.User, email models.Email) (stri
 
 	gmail := Gmail.Gmail{}
 	gmail.AccessToken = user.AccessToken
+
+	if len(email.Attachments) > 0 {
+		return gmail.SendEmailWithAttachments(r, c, from, to, email.Subject, email.Body, email, files)
+	}
 
 	return gmail.SendEmail(c, from, to, email.Subject, email.Body)
 }

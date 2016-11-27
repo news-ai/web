@@ -23,7 +23,7 @@ func SendGmailEmail(r *http.Request, user models.User, email models.Email, files
 	gmail := Gmail.Gmail{}
 	gmail.AccessToken = user.AccessToken
 
-	if len(email.Attachments) > 0 {
+	if len(email.Attachments) > 0 && len(files) > 0 {
 		return gmail.SendEmailWithAttachments(r, c, from, to, email.Subject, email.Body, email, files)
 	}
 

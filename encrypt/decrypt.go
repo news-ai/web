@@ -1,5 +1,13 @@
 package encrypt
 
+import (
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
+	"errors"
+	"strconv"
+)
+
 /*
  - http://codereview.stackexchange.com/questions/125846/encrypting-strings-in-golang
 */
@@ -28,7 +36,7 @@ func decryptString(cryptoText string, keyString string) (plainTextString string,
 		return "", err
 	}
 	if len(encrypted) < aes.BlockSize {
-		return "", fmt.Errorf("cipherText too short. It decodes to %v bytes but the minimum length is 16", len(encrypted))
+		return "", errors.New("cipherText too short. It decodes to " + strconv.Itoa(len(encrypted)) + " bytes but the minimum length is 16")
 	}
 
 	decrypted, err := decryptAES(hashTo32Bytes(keyString), encrypted)

@@ -51,7 +51,28 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 	tos := []*mail.Email{
 		to,
 	}
+
 	p.AddTos(tos...)
+
+	ccs := []*mail.Email{}
+	for i := 0; i < len(email.CC); i++ {
+		cc := mail.NewEmail("", email.CC[i])
+		ccs = append(ccs, cc)
+	}
+
+	if len(ccs) > 0 {
+		p.AddCCs(ccs...)
+	}
+
+	bccs := []*mail.Email{}
+	for i := 0; i < len(email.BCC); i++ {
+		bcc := mail.NewEmail("", email.BCC[i])
+		bccs = append(bccs, bcc)
+	}
+
+	if len(bccs) > 0 {
+		p.AddCCs(bccs...)
+	}
 
 	// Add personalization
 	m.AddPersonalizations(p)

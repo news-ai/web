@@ -27,5 +27,5 @@ func SendGmailEmail(r *http.Request, user models.User, email models.Email, files
 		return gmail.SendEmailWithAttachments(r, c, from, to, email.Subject, email.Body, email, files)
 	}
 
-	return gmail.SendEmail(c, from, to, email.Subject, email.Body)
+	return gmail.SendEmail(c, from, to, email.Subject, email.Body, email)
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"errors"
+	"os"
 	"strconv"
 )
 
@@ -30,7 +31,8 @@ func decryptAES(key, data []byte) ([]byte, error) {
 // Takes two strings, cryptoText and keyString.
 // cryptoText is the text to be decrypted and the keyString is the key to use for the decryption.
 // The function will output the resulting plain text string with an error variable.
-func DecryptString(cryptoText string, keyString string) (plainTextString string, err error) {
+func DecryptString(cryptoText string) (plainTextString string, err error) {
+	keyString := os.Getenv("SECRETKEYEMAILPW")
 	encrypted, err := base64.URLEncoding.DecodeString(cryptoText)
 	if err != nil {
 		return "", err

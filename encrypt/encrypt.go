@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"io"
+	"os"
 )
 
 /*
@@ -45,7 +46,8 @@ func encryptAES(key, data []byte) ([]byte, error) {
 // Takes two string, plainText and keyString.
 // plainText is the text that needs to be encrypted by keyString.
 // The function will output the resulting crypto text and an error variable.
-func EncryptString(plainText string, keyString string) (cipherTextString string, err error) {
+func EncryptString(plainText string) (cipherTextString string, err error) {
+	keyString := os.Getenv("SECRETKEYEMAILPW")
 	key := hashTo32Bytes(keyString)
 	encrypted, err := encryptAES(key, []byte(plainText))
 	if err != nil {

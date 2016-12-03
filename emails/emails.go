@@ -32,6 +32,11 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 	emailFullName := strings.Join([]string{email.FirstName, email.LastName}, " ")
 
 	from := mail.NewEmail(userFullName, user.Email)
+
+	if user.EmailAlias != "" {
+		from = mail.NewEmail(userFullName, user.EmailAlias)
+	}
+
 	to := mail.NewEmail(emailFullName, email.To)
 	content := mail.NewContent("text/html", email.Body)
 
@@ -45,7 +50,12 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 
 	// Adding a personalization for the email
 	p := mail.NewPersonalization()
-	p.Subject = email.Subject
+
+	if email.Subject == "" {
+		p.Subject = "(no subject)"
+	} else {
+		p.Subject = email.Subject
+	}
 
 	// Adding who we are sending the email to
 	tos := []*mail.Email{

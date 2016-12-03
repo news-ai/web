@@ -18,6 +18,11 @@ func SendGmailEmail(r *http.Request, user models.User, email models.Email, files
 	emailFullName := strings.Join([]string{email.FirstName, email.LastName}, " ")
 
 	from := userFullName + "<" + user.Email + ">"
+
+	if user.EmailAlias != "" {
+		from = userFullName + "<" + user.EmailAlias + ">"
+	}
+
 	to := emailFullName + "<" + email.To + ">"
 
 	gmail := Gmail.Gmail{}

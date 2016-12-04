@@ -2,6 +2,7 @@ package emails
 
 import (
 	"crypto/tls"
+	"errors"
 	"net"
 	"net/smtp"
 )
@@ -21,16 +22,16 @@ func VerifySMTP(servername string, email string, password string) error {
 	// from the very beginning (no starttls)
 	conn, err := tls.Dial("tcp", servername, tlsconfig)
 	if err != nil {
-		return err
+		return errors.New("The servername you have entered for your SMTP connection is invalid")
 	}
 
 	smtpC, err := smtp.NewClient(conn, host)
 	if err != nil {
-		return err
+		return errors.New("Could not connect to your SMTP host")
 	}
 
 	if err = smtpC.Auth(auth); err != nil {
-		return err
+		return errors.New("Your email or password is invalid")
 	}
 
 	return nil

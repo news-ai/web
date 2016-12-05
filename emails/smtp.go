@@ -29,19 +29,25 @@ func GenerateEmail(r *http.Request, user models.User, email models.Email, files 
 }
 
 func GenerateEmailWithoutAttachments(from string, to string, subject string, body string, email models.Email) (string, error) {
-	// CC := ""
-	// BCC := ""
+	CC := ""
+	BCC := ""
 
-	// if len(email.CC) > 0 {
-	// 	CC = "Cc: " + strings.Join(email.CC, ",") + "\r\n"
-	// }
+	if len(email.CC) > 0 {
+		CC = "Cc: " + strings.Join(email.CC, ",") + "\r\n"
+	}
 
-	// if len(email.BCC) > 0 {
-	// 	BCC = "Bcc: " + strings.Join(email.BCC, ",") + "\r\n"
-	// }
+	if len(email.BCC) > 0 {
+		BCC = "Bcc: " + strings.Join(email.BCC, ",") + "\r\n"
+	}
 
-	temp := []byte("Content-type: text/html;charset=iso-8859-1\r\n" +
+	temp := []byte("From: " + from + "\r\n" +
+		CC +
+		BCC +
+		"reply-to: " + from + "\r\n" +
+		"Content-type: text/html;charset=iso-8859-1\r\n" +
 		"MIME-Version: 1.0\r\n" +
+		"To:  " + to + "\r\n" +
+		"Subject: " + subject + "\r\n" +
 		"\r\n" + body)
 
 	raw := base64.StdEncoding.EncodeToString(temp)
@@ -56,18 +62,25 @@ func GenerateEmailWithAttachments(r *http.Request, from string, to string, subje
 	nl := "\r\n" // newline
 	boundary := "__newsai_tabulae__"
 
-	// CC := ""
-	// BCC := ""
+	CC := ""
+	BCC := ""
 
-	// if len(email.CC) > 0 {
-	// 	CC = "Cc: " + strings.Join(email.CC, ",") + nl
-	// }
+	if len(email.CC) > 0 {
+		CC = "Cc: " + strings.Join(email.CC, ",") + nl
+	}
 
-	// if len(email.BCC) > 0 {
-	// 	BCC = "Bcc: " + strings.Join(email.BCC, ",") + nl
-	// }
+	if len(email.BCC) > 0 {
+		BCC = "Bcc: " + strings.Join(email.BCC, ",") + nl
+	}
 
 	temp := []byte("MIME-Version: 1.0" + nl +
+		"To:  " + to + nl +
+		CC +
+		BCC +
+		"From: " + from + nl +
+		"reply-to: " + from + nl +
+		"Subject: " + subject + nl +
+
 		"Content-Type: multipart/mixed; boundary=\"" + boundary + "\"" + nl + nl +
 
 		// Boundary one is email itself

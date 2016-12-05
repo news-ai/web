@@ -13,7 +13,22 @@ import (
 	"github.com/news-ai/tabulae/models"
 )
 
-func GenerateEmail(from string, to string, subject string, body string, email models.Email) (string, error) {
+func GenerateEmail(r *http.Request, user models.User, email models.Email, files []models.File) (string, error) {
+	userFullName := strings.Join([]string{user.FirstName, user.LastName}, " ")
+	emailFullName := strings.Join([]string{email.FirstName, email.LastName}, " ")
+
+	from := userFullName + "<" + user.SMTPUsername + ">"
+
+	to := emailFullName + "<" + email.To + ">"
+
+	if len(email.Attachments) > 0 && len(files) > 0 {
+		return GenerateEmailWithAttachments(r, from, to, email.Subject, email.Body, email, files)
+	}
+
+	return GenerateEmailWithoutAttachments(from, to, email.Subject, email.Body, email)
+}
+
+func GenerateEmailWithoutAttachments(from string, to string, subject string, body string, email models.Email) (string, error) {
 	CC := ""
 	BCC := ""
 
@@ -59,13 +74,6 @@ func GenerateEmailWithAttachments(r *http.Request, from string, to string, subje
 	}
 
 	temp := []byte("MIME-Version: 1.0" + nl +
-		"To:  " + to + nl +
-		CC +
-		BCC +
-		"From: " + from + nl +
-		"reply-to: " + from + nl +
-		"Subject: " + subject + nl +
-
 		"Content-Type: multipart/mixed; boundary=\"" + boundary + "\"" + nl + nl +
 
 		// Boundary one is email itself
@@ -110,6 +118,68 @@ func GenerateEmailWithAttachments(r *http.Request, from string, to string, subje
 	raw = strings.Replace(raw, "=", "", -1)
 
 	return raw, nil
+}
+
+func SendSMTPEmail(servername string, email string, password string, to string, subject string, body string) error {
+	headers := make(map[string]string)
+	headers["From"] = email
+	headers["To"] = to
+	headers["Subject"] = subject
+
+	host, _, _ := net.SplitHostPort(servername)
+	auth := smtp.PlainAuth("", email, password, host)
+
+	// TLS config
+	tlsconfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         host,
+	}
+
+	// Here is the key, you need to call tls.Dial instead of smtp.Dial
+	// for smtp servers running on 465 that require an ssl connection
+	// from the very beginning (no starttls)
+	conn, err := tls.Dial("tcp", servername, tlsconfig)
+	if err != nil {
+		return err
+	}
+
+	c, err := smtp.NewClient(conn, host)
+	if err != nil {
+		return err
+	}
+
+	// Auth
+	if err = c.Auth(auth); err != nil {
+		return err
+	}
+
+	// To && From
+	if err = c.Mail(email); err != nil {
+		return err
+	}
+
+	if err = c.Rcpt(to); err != nil {
+		return err
+	}
+
+	// Data
+	w, err := c.Data()
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write([]byte(body))
+	if err != nil {
+		return err
+	}
+
+	err = w.Close()
+	if err != nil {
+		return err
+	}
+
+	c.Quit()
+	return nil
 }
 
 func VerifySMTP(servername string, email string, password string) error {

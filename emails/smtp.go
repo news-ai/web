@@ -14,12 +14,11 @@ import (
 )
 
 func GenerateEmail(r *http.Request, user models.User, email models.Email, files []models.File) (string, error) {
-	userFullName := strings.Join([]string{user.FirstName, user.LastName}, " ")
-	emailFullName := strings.Join([]string{email.FirstName, email.LastName}, " ")
+	// userFullName := strings.Join([]string{user.FirstName, user.LastName}, " ")
+	// emailFullName := strings.Join([]string{email.FirstName, email.LastName}, " ")
 
-	from := userFullName + "<" + user.SMTPUsername + ">"
-
-	to := emailFullName + "<" + email.To + ">"
+	from := user.SMTPUsername
+	to := email.To
 
 	if len(email.Attachments) > 0 && len(files) > 0 {
 		return GenerateEmailWithAttachments(r, from, to, email.Subject, email.Body, email, files)
@@ -40,7 +39,7 @@ func GenerateEmailWithoutAttachments(from string, to string, subject string, bod
 		BCC = "Bcc: " + strings.Join(email.BCC, ",") + "\r\n"
 	}
 
-	temp := []byte("From: " + from + "\r\n" +
+	temp := "From: " + from + "\r\n" +
 		CC +
 		BCC +
 		"reply-to: " + from + "\r\n" +
@@ -48,14 +47,14 @@ func GenerateEmailWithoutAttachments(from string, to string, subject string, bod
 		"MIME-Version: 1.0\r\n" +
 		"To:  " + to + "\r\n" +
 		"Subject: " + subject + "\r\n" +
-		"\r\n" + body)
+		"\r\n" + body
 
-	raw := base64.StdEncoding.EncodeToString(temp)
-	raw = strings.Replace(raw, "/", "_", -1)
-	raw = strings.Replace(raw, "+", "-", -1)
-	raw = strings.Replace(raw, "=", "", -1)
+	// raw := base64.StdEncoding.EncodeToString(temp)
+	// raw = strings.Replace(raw, "/", "_", -1)
+	// raw = strings.Replace(raw, "+", "-", -1)
+	// raw = strings.Replace(raw, "=", "", -1)
 
-	return raw, nil
+	return temp, nil
 }
 
 func GenerateEmailWithAttachments(r *http.Request, from string, to string, subject string, body string, email models.Email, files []models.File) (string, error) {

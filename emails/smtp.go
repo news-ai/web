@@ -14,11 +14,11 @@ import (
 )
 
 func GenerateEmail(r *http.Request, user models.User, email models.Email, files []models.File) (string, error) {
-	// userFullName := strings.Join([]string{user.FirstName, user.LastName}, " ")
-	// emailFullName := strings.Join([]string{email.FirstName, email.LastName}, " ")
+	userFullName := strings.Join([]string{user.FirstName, user.LastName}, " ")
+	emailFullName := strings.Join([]string{email.FirstName, email.LastName}, " ")
 
-	from := user.SMTPUsername
-	to := email.To
+	from := userFullName + " <" + user.SMTPUsername + ">"
+	to := emailFullName + " <" + email.To + ">"
 
 	if len(email.Attachments) > 0 && len(files) > 0 {
 		return GenerateEmailWithAttachments(r, from, to, email.Subject, email.Body, email, files)
@@ -48,11 +48,6 @@ func GenerateEmailWithoutAttachments(from string, to string, subject string, bod
 		"To:  " + to + "\r\n" +
 		"Subject: " + subject + "\r\n" +
 		"\r\n" + body
-
-	// raw := base64.StdEncoding.EncodeToString(temp)
-	// raw = strings.Replace(raw, "/", "_", -1)
-	// raw = strings.Replace(raw, "+", "-", -1)
-	// raw = strings.Replace(raw, "=", "", -1)
 
 	return temp, nil
 }
@@ -118,12 +113,7 @@ func GenerateEmailWithAttachments(r *http.Request, from string, to string, subje
 
 	temp = append(temp, finalBoundry...)
 
-	raw := base64.StdEncoding.EncodeToString(temp)
-	raw = strings.Replace(raw, "/", "_", -1)
-	raw = strings.Replace(raw, "+", "-", -1)
-	raw = strings.Replace(raw, "=", "", -1)
-
-	return raw, nil
+	return string(temp[:]), nil
 }
 
 func SendSMTPEmail(servername string, email string, password string, to string, subject string, body string) error {

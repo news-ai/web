@@ -81,7 +81,7 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 	}
 
 	if len(bccs) > 0 {
-		p.AddCCs(bccs...)
+		p.AddBCCs(bccs...)
 	}
 
 	// Add personalization

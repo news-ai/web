@@ -37,6 +37,10 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 		from = mail.NewEmail(userFullName, user.EmailAlias)
 	}
 
+	if email.FromEmail != "" {
+		from = mail.NewEmail(userFullName, email.FromEmail)
+	}
+
 	to := mail.NewEmail(emailFullName, email.To)
 	content := mail.NewContent("text/html", email.Body)
 

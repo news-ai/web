@@ -180,7 +180,6 @@ func SendSMTPEmail(servername string, email string, password string, to string, 
 
 func VerifySMTP(servername string, email string, password string) error {
 	host, _, _ := net.SplitHostPort(servername)
-	auth := smtp.PlainAuth("", email, password, host)
 
 	// TLS config
 	tlsconfig := &tls.Config{
@@ -188,7 +187,9 @@ func VerifySMTP(servername string, email string, password string) error {
 		ServerName:         host,
 	}
 
-	if strings.Contains(servername, ":587") {
+	if servername == "smtp.office365.com:587" {
+		auth := LoginAuth(email, password)
+
 		conn, err := net.Dial("tcp", servername)
 		if err != nil {
 			return errors.New("Error Dialing")
@@ -201,19 +202,12 @@ func VerifySMTP(servername string, email string, password string) error {
 
 		smtpC.StartTLS(tlsconfig)
 
-		server := smtp.ServerInfo{}
-		server.Name = servername
-		server.TLS = true
-		server.Auth = []string{"LOGIN"}
-
-		if err = auth.Start(&server); err != nil {
-			return errors.New(err.Error())
-		}
-
 		if err = smtpC.Auth(auth); err != nil {
 			return errors.New("Your email or password is invalid " + err.Error())
 		}
 	} else {
+		auth := smtp.PlainAuth("", email, password, host)
+
 		// Here is the key, you need to call tls.Dial instead of smtp.Dial
 		// for smtp servers running on 465 that require an ssl connection
 		// from the very beginning (no starttls)

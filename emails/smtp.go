@@ -199,6 +199,8 @@ func VerifySMTP(servername string, email string, password string) error {
 			return errors.New("Could not connect to your SMTP host")
 		}
 
+		smtpC.StartTLS(tlsconfig)
+
 		if err = smtpC.Auth(auth); err != nil {
 			return errors.New("Your email or password is invalid")
 		}

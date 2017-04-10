@@ -202,7 +202,7 @@ func VerifySMTP(servername string, email string, password string) error {
 		smtpC.StartTLS(tlsconfig)
 
 		if err = smtpC.Auth(auth); err != nil {
-			return errors.New("Your email or password is invalid")
+			return errors.New("Your email or password is invalid " + err.Error())
 		}
 	} else {
 		// Here is the key, you need to call tls.Dial instead of smtp.Dial

@@ -123,7 +123,6 @@ func SendSMTPEmail(servername string, email string, password string, to string, 
 	headers["Subject"] = subject
 
 	host, _, _ := net.SplitHostPort(servername)
-	auth := smtp.PlainAuth("", email, password, host)
 
 	// TLS config
 	tlsconfig := &tls.Config{
@@ -131,50 +130,100 @@ func SendSMTPEmail(servername string, email string, password string, to string, 
 		ServerName:         host,
 	}
 
-	// Here is the key, you need to call tls.Dial instead of smtp.Dial
-	// for smtp servers running on 465 that require an ssl connection
-	// from the very beginning (no starttls)
-	conn, err := tls.Dial("tcp", servername, tlsconfig)
-	if err != nil {
-		return err
+	if servername == "smtp.office365.com:587" {
+		auth := LoginAuth(email, password)
+
+		conn, err := net.Dial("tcp", servername)
+		if err != nil {
+			return err
+		}
+
+		smtpC, err := smtp.NewClient(conn, host)
+		if err != nil {
+			return err
+		}
+
+		smtpC.StartTLS(tlsconfig)
+
+		if err = smtpC.Auth(auth); err != nil {
+			return err
+		}
+
+		// To && From
+		if err = smtpC.Mail(email); err != nil {
+			return err
+		}
+
+		if err = smtpC.Rcpt(to); err != nil {
+			return err
+		}
+
+		// Data
+		w, err := smtpC.Data()
+		if err != nil {
+			return err
+		}
+
+		_, err = w.Write([]byte(body))
+		if err != nil {
+			return err
+		}
+
+		err = w.Close()
+		if err != nil {
+			return err
+		}
+
+		smtpC.Quit()
+	} else {
+		auth := smtp.PlainAuth("", email, password, host)
+
+		// Here is the key, you need to call tls.Dial instead of smtp.Dial
+		// for smtp servers running on 465 that require an ssl connection
+		// from the very beginning (no starttls)
+		conn, err := tls.Dial("tcp", servername, tlsconfig)
+		if err != nil {
+			return err
+		}
+
+		c, err := smtp.NewClient(conn, host)
+		if err != nil {
+			return err
+		}
+
+		// Auth
+		if err = c.Auth(auth); err != nil {
+			return err
+		}
+
+		// To && From
+		if err = c.Mail(email); err != nil {
+			return err
+		}
+
+		if err = c.Rcpt(to); err != nil {
+			return err
+		}
+
+		// Data
+		w, err := c.Data()
+		if err != nil {
+			return err
+		}
+
+		_, err = w.Write([]byte(body))
+		if err != nil {
+			return err
+		}
+
+		err = w.Close()
+		if err != nil {
+			return err
+		}
+
+		c.Quit()
 	}
 
-	c, err := smtp.NewClient(conn, host)
-	if err != nil {
-		return err
-	}
-
-	// Auth
-	if err = c.Auth(auth); err != nil {
-		return err
-	}
-
-	// To && From
-	if err = c.Mail(email); err != nil {
-		return err
-	}
-
-	if err = c.Rcpt(to); err != nil {
-		return err
-	}
-
-	// Data
-	w, err := c.Data()
-	if err != nil {
-		return err
-	}
-
-	_, err = w.Write([]byte(body))
-	if err != nil {
-		return err
-	}
-
-	err = w.Close()
-	if err != nil {
-		return err
-	}
-
-	c.Quit()
 	return nil
 }
 

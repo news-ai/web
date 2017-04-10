@@ -33,12 +33,12 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 
 	from := mail.NewEmail(userFullName, user.Email)
 
-	if user.EmailAlias != "" {
-		from = mail.NewEmail(userFullName, user.EmailAlias)
-	}
-
 	if email.FromEmail != "" {
 		from = mail.NewEmail(userFullName, email.FromEmail)
+	}
+
+	if user.EmailAlias != "" {
+		from = mail.NewEmail(userFullName, user.EmailAlias)
 	}
 
 	to := mail.NewEmail(emailFullName, email.To)

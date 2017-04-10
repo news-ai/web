@@ -189,7 +189,7 @@ func VerifySMTP(servername string, email string, password string) error {
 	}
 
 	if strings.Contains(servername, ":587") {
-		conn, err := net.Dial("tcp", serverAddr)
+		conn, err := net.Dial("tcp", servername)
 		if err != nil {
 			return errors.New("Error Dialing")
 		}

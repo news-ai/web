@@ -205,7 +205,7 @@ func VerifySMTP(servername string, email string, password string) error {
 		server.Name = servername
 		server.TLS = true
 		server.Auth = []string{"PLAIN"}
-		auth.Start(server)
+		auth.Start(&server)
 
 		if err = smtpC.Auth(auth); err != nil {
 			return errors.New("Your email or password is invalid " + err.Error())

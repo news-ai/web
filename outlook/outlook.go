@@ -20,8 +20,8 @@ import (
 
 type OutlookRefreshTokenResponse struct {
 	TokenType    string `json:"token_type"`
-	ExpiresIn    string `json:"expires_in"`
-	ExpiresOn    string `json:"expires_on"`
+	ExpiresIn    int    `json:"expires_in"`
+	ExpiresOn    int    `json:"ext_expires_in"`
 	NotBefore    string `json:"not_before"`
 	Resource     string `json:"resource"`
 	AccessToken  string `json:"access_token"`
@@ -29,6 +29,7 @@ type OutlookRefreshTokenResponse struct {
 	Scope        string `json:"scope"`
 	PwdExp       string `json:"pwd_exp"`
 	PwdURL       string `json:"pwd_url"`
+	IdToken      string `json:"id_token"`
 }
 
 // Check if access token is valid

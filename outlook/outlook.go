@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/news-ai/tabulae/models"
@@ -88,12 +87,7 @@ func RefreshAccessToken(r *http.Request, user models.User) (models.User, error) 
 	}
 
 	if refreshtoken.AccessToken != "" {
-		refreshTime, err := strconv.Atoi(refreshtoken.ExpiresIn)
-		if err != nil {
-			refreshTime = 3600
-		}
-
-		timeToAdd := time.Duration(time.Duration(refreshTime) * time.Second)
+		timeToAdd := time.Duration(time.Duration(refreshtoken.ExpiresIn) * time.Second)
 		user.OutlookAccessToken = refreshtoken.AccessToken
 		user.OutlookExpiresIn = time.Now().Add(timeToAdd)
 		user.OutlookTokenType = refreshtoken.TokenType

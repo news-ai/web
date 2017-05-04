@@ -19,11 +19,16 @@ type BasePagingResponse struct {
 	Next    string            `json:"next"`
 }
 
+type BaseSummaryResponse struct {
+	Total int `json:"total"`
+}
+
 type BaseResponse struct {
-	Count    int                `json:"count"`
-	Data     interface{}        `json:"data"`
-	Included interface{}        `json:"included"`
-	Paging   BasePagingResponse `json:"paging"`
+	Count    int                 `json:"count"`
+	Data     interface{}         `json:"data"`
+	Included interface{}         `json:"included"`
+	Paging   BasePagingResponse  `json:"paging"`
+	Summary  BaseSummaryResponse `json:"summary"`
 }
 
 type BaseSingleResponse struct {
@@ -31,7 +36,7 @@ type BaseSingleResponse struct {
 	Included interface{} `json:"included"`
 }
 
-func BaseResponseHandler(val interface{}, included interface{}, count int, err error, r *http.Request) (BaseResponse, error) {
+func BaseResponseHandler(val interface{}, included interface{}, count int, total int, err error, r *http.Request) (BaseResponse, error) {
 	response := BaseResponse{}
 	response.Data = val
 	response.Included = included
@@ -40,6 +45,11 @@ func BaseResponseHandler(val interface{}, included interface{}, count int, err e
 	basePagingResponse := BasePagingResponse{}
 	basePagingResponse.Next = gcontext.Get(r, "next").(string)
 	response.Paging = basePagingResponse
+
+	baseSummaryResponse := BaseSummaryResponse{}
+	baseSummaryResponse.Total = total
+	response.Summary = baseSummaryResponse
+
 	return response, err
 }
 

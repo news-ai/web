@@ -9,6 +9,8 @@ import (
 	"github.com/news-ai/tabulae/attach"
 	"github.com/news-ai/tabulae/models"
 
+	apiModels "github.com/news-ai/api/models"
+
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
@@ -23,7 +25,7 @@ type EmailSubstitute struct {
 }
 
 // Send an email confirmation to a new user
-func SendEmail(r *http.Request, email models.Email, user models.User, files []models.File) (bool, string, error) {
+func SendEmail(r *http.Request, email models.Email, user apiModels.User, files []models.File) (bool, string, error) {
 	c := appengine.NewContext(r)
 
 	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)
@@ -133,7 +135,7 @@ func SendEmail(r *http.Request, email models.Email, user models.User, files []mo
 }
 
 // Send an email confirmation to a new user
-func SendEmailAttachment(r *http.Request, email models.Email, user models.User, files []models.File, bytesArray [][]byte, attachmentType []string, fileNames []string) (bool, string, error) {
+func SendEmailAttachment(r *http.Request, email models.Email, user apiModels.User, files []models.File, bytesArray [][]byte, attachmentType []string, fileNames []string) (bool, string, error) {
 	c := appengine.NewContext(r)
 
 	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)

@@ -14,9 +14,11 @@ import (
 	"google.golang.org/appengine/urlfetch"
 
 	sp "github.com/news-ai/gosparkpost"
+
+	apiModels "github.com/news-ai/api/models"
 )
 
-func SendSparkPostEmail(r *http.Request, email models.Email, user models.User, files []models.File) (bool, string, error) {
+func SendSparkPostEmail(r *http.Request, email models.Email, user apiModels.User, files []models.File) (bool, string, error) {
 	c := appengine.NewContext(r)
 
 	apiKey := os.Getenv("SPARKPOST_API_KEY")

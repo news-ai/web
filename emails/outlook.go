@@ -6,12 +6,14 @@ import (
 
 	"github.com/news-ai/tabulae/models"
 
+	apiModels "github.com/news-ai/api/models"
+
 	"google.golang.org/appengine"
 
 	Outlook "github.com/news-ai/go-outlook"
 )
 
-func SendOutlookEmail(r *http.Request, user models.User, email models.Email, files []models.File) error {
+func SendOutlookEmail(r *http.Request, user apiModels.User, email models.Email, files []models.File) error {
 	c := appengine.NewContext(r)
 
 	userFullName := strings.Join([]string{user.FirstName, user.LastName}, " ")

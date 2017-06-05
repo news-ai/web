@@ -11,9 +11,11 @@ import (
 
 	"github.com/news-ai/tabulae/attach"
 	"github.com/news-ai/tabulae/models"
+
+	apiModels "github.com/news-ai/api/models"
 )
 
-func GenerateEmail(r *http.Request, user models.User, email models.Email, files []models.File) (string, error) {
+func GenerateEmail(r *http.Request, user apiModels.User, email models.Email, files []models.File) (string, error) {
 	userFullName := strings.Join([]string{user.FirstName, user.LastName}, " ")
 	emailFullName := strings.Join([]string{email.FirstName, email.LastName}, " ")
 

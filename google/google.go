@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/news-ai/tabulae/models"
+	"github.com/news-ai/api/models"
 
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"

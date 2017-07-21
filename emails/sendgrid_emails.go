@@ -24,8 +24,16 @@ type EmailSubstitute struct {
 	Code string
 }
 
+func GetSendGridKeyForUser(userBilling apiModels.Billing) string {
+	if userBilling.IsOnTrial {
+		return os.Getenv("SENDGRID_INTERNAL_API_KEY")
+	}
+
+	return os.Getenv("SENDGRID_API_KEY")
+}
+
 // Send an email confirmation to a new user
-func SendEmail(r *http.Request, email models.Email, user apiModels.User, files []models.File) (bool, string, error) {
+func SendEmail(r *http.Request, email models.Email, user apiModels.User, files []models.File, sendGridKey string) (bool, string, error) {
 	c := appengine.NewContext(r)
 
 	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)
@@ -115,7 +123,7 @@ func SendEmail(r *http.Request, email models.Email, user apiModels.User, files [
 		}
 	}
 
-	request := sendgrid.GetRequest(os.Getenv("SENDGRID_API_KEY"), "/v3/mail/send", "https://api.sendgrid.com")
+	request := sendgrid.GetRequest(sendGridKey, "/v3/mail/send", "https://api.sendgrid.com")
 	request.Method = "POST"
 	request.Body = mail.GetRequestBody(m)
 
@@ -135,7 +143,7 @@ func SendEmail(r *http.Request, email models.Email, user apiModels.User, files [
 }
 
 // Send an email confirmation to a new user
-func SendEmailAttachment(r *http.Request, email models.Email, user apiModels.User, files []models.File, bytesArray [][]byte, attachmentType []string, fileNames []string) (bool, string, error) {
+func SendEmailAttachment(r *http.Request, email models.Email, user apiModels.User, files []models.File, bytesArray [][]byte, attachmentType []string, fileNames []string, sendGridKey string) (bool, string, error) {
 	c := appengine.NewContext(r)
 
 	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)
@@ -221,7 +229,7 @@ func SendEmailAttachment(r *http.Request, email models.Email, user apiModels.Use
 		}
 	}
 
-	request := sendgrid.GetRequest(os.Getenv("SENDGRID_API_KEY"), "/v3/mail/send", "https://api.sendgrid.com")
+	request := sendgrid.GetRequest(sendGridKey, "/v3/mail/send", "https://api.sendgrid.com")
 	request.Method = "POST"
 	request.Body = mail.GetRequestBody(m)
 

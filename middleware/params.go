@@ -36,6 +36,11 @@ func GetPagination(r *http.Request) (int, int, string) {
 	return limit, offset, queryAfter
 }
 
+func GetParambyId(r *http.Request, queryName string) string {
+	searchQuery := r.URL.Query().Get(queryName)
+	return searchQuery
+}
+
 func GetParams(r *http.Request) (string, string, string) {
 	url := utilities.StripQueryString(r.URL.String())
 	searchQuery := r.URL.Query().Get("q")

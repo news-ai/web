@@ -46,6 +46,7 @@ func GetTitleFromHTTPRequest(c context.Context, url string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer resp.Body.Close()
 
 	title, ok, err := getHtmlTitle(resp.Body)
 	if !ok {

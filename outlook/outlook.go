@@ -45,6 +45,7 @@ func ValidateAccessToken(r *http.Request, user models.User) error {
 		log.Errorf(c, "%v", "there was an issue getting your token "+err.Error())
 		return err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode == 401 {
 		return errors.New("Access token expired")
@@ -76,6 +77,7 @@ func RefreshAccessToken(r *http.Request, user models.User) (models.User, error) 
 		log.Errorf(c, "%v", err)
 		return user, err
 	}
+	defer response.Body.Close()
 
 	// Decode JSON from Google
 	decoder := json.NewDecoder(response.Body)

@@ -55,6 +55,7 @@ func ValidateAccessToken(r *http.Request, user models.User) error {
 		log.Errorf(c, "%v", err)
 		return err
 	}
+	defer resp.Body.Close()
 
 	// Decode JSON from Google
 	decoder := json.NewDecoder(resp.Body)
@@ -97,6 +98,7 @@ func RefreshAccessToken(r *http.Request, user models.User) (models.User, error) 
 		log.Errorf(c, "%v", err)
 		return user, err
 	}
+	defer response.Body.Close()
 
 	// Decode JSON from Google
 	decoder := json.NewDecoder(response.Body)

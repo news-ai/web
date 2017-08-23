@@ -9,6 +9,8 @@ import (
 	"github.com/news-ai/tabulae/attach"
 	"github.com/news-ai/tabulae/models"
 
+	"golang.org/x/net/context"
+
 	apiModels "github.com/news-ai/api/models"
 
 	"google.golang.org/appengine"
@@ -18,11 +20,6 @@ import (
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
-
-type EmailSubstitute struct {
-	Name string
-	Code string
-}
 
 func GetSendGridKeyForUser(userBilling apiModels.Billing) string {
 	if userBilling.IsOnTrial {
@@ -143,9 +140,7 @@ func SendEmail(r *http.Request, email models.Email, user apiModels.User, files [
 }
 
 // Send an email confirmation to a new user
-func SendEmailAttachment(r *http.Request, email models.Email, user apiModels.User, files []models.File, bytesArray [][]byte, attachmentType []string, fileNames []string, sendGridKey string) (bool, string, error) {
-	c := appengine.NewContext(r)
-
+func SendEmailAttachment(c context.Context, email models.Email, user apiModels.User, files []models.File, bytesArray [][]byte, attachmentType []string, fileNames []string, sendGridKey string) (bool, string, error) {
 	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)
 
 	userFullName := strings.Join([]string{user.FirstName, user.LastName}, " ")

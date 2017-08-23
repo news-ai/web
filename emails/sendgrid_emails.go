@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/news-ai/tabulae/attach"
 	"github.com/news-ai/tabulae/models"
@@ -140,7 +141,7 @@ func SendEmail(r *http.Request, email models.Email, user apiModels.User, files [
 }
 
 // Send an email confirmation to a new user
-func SendEmailAttachment(c context.Context, email models.Email, user apiModels.User, files []models.File, bytesArray [][]byte, attachmentType []string, fileNames []string, sendGridKey string) (bool, string, error) {
+func SendEmailAttachment(c context.Context, email models.Email, user apiModels.User, files []models.File, bytesArray [][]byte, attachmentType []string, fileNames []string, sendGridKey string, emailDelay int) (bool, string, error) {
 	sendgrid.DefaultClient.HTTPClient = urlfetch.Client(c)
 
 	userFullName := strings.Join([]string{user.FirstName, user.LastName}, " ")
@@ -222,6 +223,17 @@ func SendEmailAttachment(c context.Context, email models.Email, user apiModels.U
 
 			m.AddAttachment(a)
 		}
+	}
+
+	if emailDelay > 0 {
+		timeSend := time.Now()
+		timeSend = timeSend.Add(time.Hour*time.Duration(0) +
+			time.Minute*time.Duration(0) +
+			time.Second*time.Duration(emailDelay))
+		timeInt := int(timeSend.Unix())
+		m.SetSendAt(timeInt)
+		log.Infof(c, "%v", email.To)
+		log.Infof(c, "%v", m.SendAt)
 	}
 
 	request := sendgrid.GetRequest(sendGridKey, "/v3/mail/send", "https://api.sendgrid.com")

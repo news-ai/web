@@ -3,16 +3,13 @@ package google
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
 
 	"github.com/news-ai/api/models"
-
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/log"
-	"google.golang.org/appengine/urlfetch"
 
 	"golang.org/x/net/context"
 )
@@ -46,13 +43,10 @@ type RefreshTokenResponse struct {
 }
 
 // Check if access token is valid
-func ValidateAccessToken(r *http.Request, user models.User) error {
-	c := appengine.NewContext(r)
-
-	client := urlfetch.Client(c)
-	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo?alt=json&access_token=" + user.AccessToken)
+func ValidateAccessToken(c context.Context, user models.User) error {
+	resp, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?alt=json&access_token=" + user.AccessToken)
 	if err != nil {
-		log.Errorf(c, "%v", err)
+		log.Printf("%v", err)
 		return err
 	}
 	defer resp.Body.Close()
@@ -62,7 +56,7 @@ func ValidateAccessToken(r *http.Request, user models.User) error {
 	var googleUser User
 	err = decoder.Decode(&googleUser)
 	if err != nil {
-		log.Errorf(c, "%v", err)
+		log.Printf("%v", err)
 		return err
 	}
 
@@ -70,17 +64,12 @@ func ValidateAccessToken(r *http.Request, user models.User) error {
 		return nil
 	}
 
-	log.Infof(c, "%v", googleUser)
+	log.Printf("%v", googleUser)
 
 	return errors.New("Access token expired")
 }
 
-func RefreshAccessToken(r *http.Request, user models.User) (models.User, error) {
-	c := appengine.NewContext(r)
-
-	contextWithTimeout, _ := context.WithTimeout(c, time.Second*15)
-	client := urlfetch.Client(contextWithTimeout)
-
+func RefreshAccessToken(c context.Context, user models.User) (models.User, error) {
 	if user.RefreshToken == "" {
 		return user, errors.New("User does not have a refresh token")
 	}
@@ -93,9 +82,9 @@ func RefreshAccessToken(r *http.Request, user models.User) (models.User, error) 
 	form.Add("refresh_token", user.RefreshToken)
 	form.Add("grant_type", "refresh_token")
 
-	response, err := client.PostForm(URL, form)
+	response, err := http.PostForm(URL, form)
 	if err != nil {
-		log.Errorf(c, "%v", err)
+		log.Printf("%v", err)
 		return user, err
 	}
 	defer response.Body.Close()
@@ -105,7 +94,7 @@ func RefreshAccessToken(r *http.Request, user models.User) (models.User, error) 
 	var refreshtoken RefreshTokenResponse
 	err = decoder.Decode(&refreshtoken)
 	if err != nil {
-		log.Errorf(c, "%v", err)
+		log.Printf("%v", err)
 		return user, err
 	}
 
@@ -114,7 +103,6 @@ func RefreshAccessToken(r *http.Request, user models.User) (models.User, error) 
 		user.AccessToken = refreshtoken.AccessToken
 		user.GoogleExpiresIn = time.Now().Add(timeToAdd)
 		user.TokenType = refreshtoken.TokenType
-		user.Save(c)
 		return user, nil
 	}
 

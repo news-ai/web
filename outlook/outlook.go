@@ -3,16 +3,13 @@ package outlook
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
 
 	"github.com/news-ai/api/models"
-
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/log"
-	"google.golang.org/appengine/urlfetch"
 
 	"golang.org/x/net/context"
 )
@@ -32,17 +29,15 @@ type OutlookRefreshTokenResponse struct {
 }
 
 // Check if access token is valid
-func ValidateAccessToken(r *http.Request, user models.User) error {
-	c := appengine.NewContext(r)
-
-	client := urlfetch.Client(c)
+func ValidateAccessToken(c context.Context, user models.User) error {
 	req, _ := http.NewRequest("GET", "https://outlook.office.com/api/v2.0/me", nil)
 	req.Header.Add("Authorization", "Bearer "+user.OutlookAccessToken)
 	req.Header.Add("Content-Type", "application/json")
 
+	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Errorf(c, "%v", "there was an issue getting your token "+err.Error())
+		log.Printf("%v", "there was an issue getting your token "+err.Error())
 		return err
 	}
 	defer resp.Body.Close()
@@ -54,12 +49,7 @@ func ValidateAccessToken(r *http.Request, user models.User) error {
 	return nil
 }
 
-func RefreshAccessToken(r *http.Request, user models.User) (models.User, error) {
-	c := appengine.NewContext(r)
-
-	contextWithTimeout, _ := context.WithTimeout(c, time.Second*15)
-	client := urlfetch.Client(contextWithTimeout)
-
+func RefreshAccessToken(c context.Context, user models.User) (models.User, error) {
 	if user.OutlookRefreshToken == "" {
 		return user, errors.New("User does not have a refresh token")
 	}
@@ -72,9 +62,9 @@ func RefreshAccessToken(r *http.Request, user models.User) (models.User, error) 
 	form.Add("refresh_token", user.OutlookRefreshToken)
 	form.Add("grant_type", "refresh_token")
 
-	response, err := client.PostForm(URL, form)
+	response, err := http.PostForm(URL, form)
 	if err != nil {
-		log.Errorf(c, "%v", err)
+		log.Printf("%v", err)
 		return user, err
 	}
 	defer response.Body.Close()
@@ -84,7 +74,7 @@ func RefreshAccessToken(r *http.Request, user models.User) (models.User, error) 
 	var refreshtoken OutlookRefreshTokenResponse
 	err = decoder.Decode(&refreshtoken)
 	if err != nil {
-		log.Errorf(c, "%v", err)
+		log.Printf("%v", err)
 		return user, err
 	}
 
@@ -96,7 +86,6 @@ func RefreshAccessToken(r *http.Request, user models.User) (models.User, error) 
 		if refreshtoken.RefreshToken != "" {
 			user.OutlookRefreshToken = refreshtoken.RefreshToken
 		}
-		user.Save(c)
 		return user, nil
 	}
 

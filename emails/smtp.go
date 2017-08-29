@@ -5,17 +5,15 @@ import (
 	"encoding/base64"
 	"errors"
 	"net"
-	"net/http"
 	"net/smtp"
 	"strings"
 
-	"github.com/news-ai/tabulae/attach"
 	"github.com/news-ai/tabulae/models"
 
 	apiModels "github.com/news-ai/api/models"
 )
 
-func GenerateEmail(r *http.Request, user apiModels.User, email models.Email, files []models.File) (string, error) {
+func GenerateEmail(user apiModels.User, email models.Email, files []models.File, bytesArray [][]byte, attachmentType []string, fileNames []string) (string, error) {
 	userFullName := strings.Join([]string{user.FirstName, user.LastName}, " ")
 	emailFullName := strings.Join([]string{email.FirstName, email.LastName}, " ")
 
@@ -23,7 +21,7 @@ func GenerateEmail(r *http.Request, user apiModels.User, email models.Email, fil
 	to := emailFullName + " <" + email.To + ">"
 
 	if len(email.Attachments) > 0 && len(files) > 0 {
-		return GenerateEmailWithAttachments(r, from, to, email.Subject, email.Body, email, files)
+		return GenerateEmailWithAttachments(from, to, email.Subject, email.Body, email, files, bytesArray, attachmentType, fileNames)
 	}
 
 	return GenerateEmailWithoutAttachments(from, to, email.Subject, email.Body, email)
@@ -54,7 +52,7 @@ func GenerateEmailWithoutAttachments(from string, to string, subject string, bod
 	return temp, nil
 }
 
-func GenerateEmailWithAttachments(r *http.Request, from string, to string, subject string, body string, email models.Email, files []models.File) (string, error) {
+func GenerateEmailWithAttachments(from string, to string, subject string, body string, email models.Email, files []models.File, bytesArray [][]byte, attachmentType []string, fileNames []string) (string, error) {
 	nl := "\r\n" // newline
 	boundary := "__newsai_tabulae__"
 
@@ -90,22 +88,19 @@ func GenerateEmailWithAttachments(r *http.Request, from string, to string, subje
 		body + nl + nl)
 
 	for i := 0; i < len(files); i++ {
-		bytesArray, attachmentType, fileNames, err := attach.GetAttachmentsForEmail(r, email, files)
-		if err == nil {
-			for i := 0; i < len(bytesArray); i++ {
-				str := base64.StdEncoding.EncodeToString(bytesArray[i])
+		for x := 0; x < len(bytesArray); x++ {
+			str := base64.StdEncoding.EncodeToString(bytesArray[i])
 
-				attachment := []byte(
-					"--" + boundary + nl +
-						"Content-Type: " + attachmentType[i] + nl +
-						"MIME-Version: 1.0" + nl +
-						"Content-Disposition: attachment; filename=\"" + fileNames[i] + "\"" + nl +
-						"Content-Transfer-Encoding: base64" + nl + nl +
-						str + nl + nl,
-				)
+			attachment := []byte(
+				"--" + boundary + nl +
+					"Content-Type: " + attachmentType[i] + nl +
+					"MIME-Version: 1.0" + nl +
+					"Content-Disposition: attachment; filename=\"" + fileNames[i] + "\"" + nl +
+					"Content-Transfer-Encoding: base64" + nl + nl +
+					str + nl + nl,
+			)
 
-				temp = append(temp, attachment...)
-			}
+			temp = append(temp, attachment...)
 		}
 	}
 

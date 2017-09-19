@@ -3,6 +3,7 @@ package utilities
 import (
 	"errors"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -107,4 +108,13 @@ func StripQueryStringForWebsite(inputUrl string) string {
 		u.Host = strings.ToLower(u.Host)
 	}
 	return u.String()
+}
+
+func RemoveSpecialCharacters(query string) string {
+	reg, err := regexp.Compile("[^a-zA-Z0-9 ]+")
+	if err != nil {
+		return query
+	}
+
+	return reg.ReplaceAllString(query, "")
 }

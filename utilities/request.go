@@ -3,12 +3,9 @@ package utilities
 import (
 	"errors"
 	"io"
-	"time"
+	"net/http"
 
-	"golang.org/x/net/context"
 	"golang.org/x/net/html"
-
-	"google.golang.org/appengine/urlfetch"
 )
 
 func isTitleElement(n *html.Node) bool {
@@ -39,10 +36,8 @@ func getHtmlTitle(r io.Reader) (string, bool, error) {
 	return traverse(doc)
 }
 
-func GetTitleFromHTTPRequest(c context.Context, url string) (string, error) {
-	client := urlfetch.Client(c)
-	client.Timeout = time.Duration(5 * time.Second)
-	resp, err := client.Get(url)
+func GetTitleFromHTTPRequest(url string) (string, error) {
+	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
 	}
